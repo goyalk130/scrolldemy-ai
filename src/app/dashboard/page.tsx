@@ -2,7 +2,8 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Link, Video, Rocket, Wand2, Loader2, Sparkles, ArrowLeft, Download } from "lucide-react";
+import { Link as LinkIcon, Video, Rocket, Wand2, Loader2, Sparkles, ArrowLeft, Download } from "lucide-react";
+import NextLink from "next/link";
 import { SignInButton, UserButton, useAuth } from "@clerk/nextjs";
 import { motion } from "framer-motion";
 import { Player } from "@remotion/player";
@@ -154,185 +155,233 @@ function DashboardContent() {
   };
 
   return (
-    <div className="relative z-10 max-w-4xl mx-auto px-4 pt-32 pb-24">
-      <div className="mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">AI Studio</h1>
-          <div className="relative flex items-center bg-[#111] border border-white/10 rounded-full p-2 pl-6 shadow-2xl overflow-hidden ring-1 ring-white/5">
-            <Link className="text-gray-500 w-5 h-5 flex-shrink-0" />
-            <input 
-              type="text" 
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="Paste YouTube or Blog URL here..." 
-              className="bg-transparent border-none outline-none text-white px-4 py-3 w-full placeholder:text-gray-500"
-            />
-            <button 
-              onClick={() => handleGenerate(false)}
-              disabled={isGenerating}
-              className="flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-full px-8 py-3 hover:scale-105 transition-transform disabled:opacity-50 disabled:hover:scale-100 min-w-[160px]"
-            >
-              {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
-              {isGenerating ? "Analyzing..." : "Generate"}
-            </button>
+    <div className="flex flex-col lg:flex-row h-screen bg-[#0e0e0e] text-white overflow-hidden">
+      {/* 1. Sexy Glassmorphism Sidebar */}
+      <aside className="hidden lg:flex flex-col w-[280px] bg-[#131313] border-r border-[#262626] relative z-20 shadow-[4px_0_24px_rgba(0,0,0,0.5)]">
+        <div className="p-8 flex items-center gap-3">
+          <Wand2 className="w-8 h-8 font-bold text-[#cc97ff] drop-shadow-[0_0_15px_rgba(204,151,255,0.8)]" />
+          <NextLink href="/" className="hover:opacity-80 transition-opacity">
+            <h1 className="text-2xl font-black tracking-tighter" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>Scrolldemy</h1>
+          </NextLink>
+        </div>
+        <nav className="flex-1 px-6 space-y-2 mt-4">
+          <div className="flex items-center gap-3 px-5 py-4 bg-[#262626] rounded-2xl text-[#cc97ff] shadow-[0_0_20px_rgba(204,151,255,0.05)] border border-[#c284ff]/20 font-medium">
+             <Rocket className="w-5 h-5" /> Video Studio
           </div>
-      </div>
-
-      {isGenerating && generatedVideos.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-24 text-gray-400">
-            <Loader2 className="w-12 h-12 animate-spin text-purple-500 mb-4" />
-            <p className="text-lg">AI is reading your content and drafting scripts...</p>
+          <div className="flex items-center gap-3 px-5 py-4 text-[#adaaaa] hover:text-white transition-colors font-medium cursor-not-allowed opacity-50">
+             <Video className="w-5 h-5" /> My Library (Soon)
           </div>
-      )}
-
-      {generatedVideos.length > 0 && (
-        <div className="space-y-6">
-          <h3 className="text-2xl font-semibold mb-6 flex items-center gap-2">
-            <Video className="w-6 h-6 text-pink-400" />
-            Generated Scripts ({generatedVideos.length})
-          </h3>
-          
-          <div className="grid gap-6">
-            {generatedVideos.map((vid, idx) => (
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.1 }}
-                key={idx} 
-                className="bg-[#111] rounded-2xl p-6 border border-white/10 shadow-xl relative group overflow-hidden"
-              >
-                <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-purple-500 to-pink-500 rounded-l-2xl opacity-50 group-hover:opacity-100 transition-opacity" />
-                <h4 className="font-bold text-xl mb-4 pl-4 text-white">{vid.title}</h4>
-                <div className="space-y-4 pl-2 mt-6 border-l-2 border-purple-500/20 ml-2">
-                    {vid.script.map((s:any, i:number) => (
-                      <div key={i} className="pl-6 relative">
-                        <div className="absolute -left-[5px] top-2 w-2 h-2 rounded-full bg-purple-500 shadow-[0_0_10px_2px_rgba(168,85,247,0.5)]" />
-                        <p className="text-gray-100 text-lg mb-1.5 leading-snug">"{s.text}"</p>
-                        <p className="text-sm text-gray-400 font-mono flex items-center gap-1.5">
-                          <Sparkles className="w-3 h-3 text-yellow-500/70" /> [{s.imagePrompt}]
-                        </p>
-                      </div>
-                    ))}
-                </div>
-                
-                {/* Render Action and Player Mount */}
-                <div className="mt-8 pt-6 border-t border-white/5 flex flex-col items-end gap-4">
-                   <button 
-                     onClick={() => handleRenderVideo(idx)}
-                     className="flex items-center gap-2 text-sm font-semibold bg-white text-black px-6 py-2.5 rounded-full hover:scale-105 transition-transform"
-                   >
-                      <Video className="w-4 h-4" />
-                      {renderingVideoIndex === idx ? "Close Render Preview" : "Generate Audio & View Result"}
-                   </button>
-                   
-                   {renderingVideoIndex === idx && (
-                     <div className="w-full mt-4 bg-black rounded-2xl overflow-hidden border border-purple-500/30 flex flex-col items-center justify-center min-h-[400px]">
-                       {!videoAudioUrls[idx] ? (
-                         <div className="flex flex-col items-center gap-4 py-12 text-gray-400">
-                            <Loader2 className="w-8 h-8 animate-spin text-pink-500" />
-                            <p>Synthesizing ultra-realistic ElevenLabs Voiceover...</p>
-                         </div>
-                       ) : (
-                         <Player
-                           component={TikTokComposition}
-                           inputProps={{
-                             script: vid.script,
-                             audioUrl: videoAudioUrls[idx]
-                           }}
-                           durationInFrames={audioDurations[idx] ? Math.max(30, Math.ceil(audioDurations[idx] * 30)) : 1800} // precise accurate length
-                           fps={30}
-                           compositionWidth={1080}
-                           compositionHeight={1920}
-                           style={{
-                             width: '100%',
-                             maxHeight: '700px',
-                             aspectRatio: '9/16'
-                           }}
-                           controls
-                           autoPlay
-                           loop
-                         />
-                       )}
-                       
-                       {/* Download Buttons Below Player */}
-                       {videoAudioUrls[idx] && (
-                           <div className="flex gap-4 mt-6 mb-4 w-full px-8 justify-center">
-                               <button 
-                                 onClick={() => handleDownload(idx, 'mp4')}
-                                 disabled={isDownloading !== null}
-                                 className="flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:scale-105 transition-transform text-white font-bold py-3 px-8 rounded-full disabled:opacity-50 w-full"
-                               >
-                                  {isDownloading === 'mp4' ? <Loader2 className="w-5 h-5 animate-spin"/> : <Download className="w-5 h-5"/>}
-                                  {isDownloading === 'mp4' ? "Rendering Studio MP4... Wait ~1 min" : "Download MP4"}
-                               </button>
-                               <button 
-                                 onClick={() => handleDownload(idx, 'mov')}
-                                 disabled={isDownloading !== null}
-                                 className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:scale-105 transition-transform text-white font-bold py-3 px-8 rounded-full disabled:opacity-50 w-full"
-                               >
-                                  {isDownloading === 'mov' ? <Loader2 className="w-5 h-5 animate-spin"/> : <Download className="w-5 h-5"/>}
-                                  {isDownloading === 'mov' ? "Rendering Studio MOV... Wait ~1 min" : "Download MOV (Apple ProRes)"}
-                               </button>
-                           </div>
-                       )}
-                       
-                     </div>
-                   )}
-                </div>
-              </motion.div>
-            ))}
-          </div>
-          
-          <div className="pt-8 text-center">
-            <button 
-              onClick={() => handleGenerate(true)}
-              disabled={isGenerating}
-              className="inline-flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-white font-semibold rounded-2xl px-8 py-5 border border-white/10 transition-colors disabled:opacity-50"
-            >
-              {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Rocket className="w-5 h-5 text-purple-400" />}
-              {isGenerating ? "Studying next segment..." : "Generate More Videos from this Link!"}
-            </button>
+        </nav>
+        <div className="p-8 pb-10 border-t border-[#262626]">
+          <div className="bg-gradient-to-br from-[#c284ff]/10 to-[#553777]/20 p-5 rounded-3xl border border-[#c284ff]/20 relative overflow-hidden">
+             <div className="absolute top-0 right-0 w-24 h-24 bg-[#A855F7]/30 blur-[40px] rounded-full" />
+             <h3 className="font-bold text-[#A855F7] mb-1 relative z-10">Alchemist PRO</h3>
+             <p className="text-xs text-[#adaaaa] mb-4 relative z-10">Deploy limitless cloud rendering</p>
+             <button className="w-full py-2.5 bg-[#fed01b] text-[#594700] rounded-xl font-bold text-sm hover:scale-105 transition-transform shadow-[0_0_15px_rgba(254,208,27,0.3)] relative z-10">Upgrade API</button>
           </div>
         </div>
-      )}
+      </aside>
+
+      {/* Main Content Area */}
+      <main className="flex-1 flex flex-col relative h-screen overflow-y-auto scrollbar-hide">
+         {/* Ambient Background Glows */}
+         <div className="absolute top-[5%] left-[20%] w-[600px] h-[600px] bg-[#cc97ff]/5 rounded-full blur-[150px] pointer-events-none" />
+         <div className="absolute bottom-[10%] right-[10%] w-[400px] h-[400px] bg-[#c284ff]/5 rounded-full blur-[120px] pointer-events-none" />
+         
+         {/* Mobile Header / Auth */}
+         <header className="flex items-center justify-between p-6 lg:p-8 lg:pb-0 relative z-30">
+            <div className="lg:hidden flex items-center gap-2 font-bold text-xl tracking-tighter">
+               <Wand2 className="w-6 h-6 text-[#A855F7] drop-shadow-[0_0_10px_rgba(168,85,247,0.8)]" /> Scrolldemy
+            </div>
+            <div className="ml-auto">
+               {!isLoaded ? null : userId ? <UserButton /> : (
+                   <SignInButton mode="modal">
+                     <button className="bg-white/5 hover:bg-white/10 border border-[#494847]/50 px-6 py-2.5 rounded-full font-medium transition-colors backdrop-blur-xl text-sm">Deploy Auth</button>
+                   </SignInButton>
+               )}
+            </div>
+         </header>
+
+         {/* Studio Canvas */}
+         <div className="flex-1 p-6 lg:p-12 max-w-6xl w-full mx-auto relative z-10 space-y-12 pb-32">
+            
+            {/* The Prompt Machine */}
+            <section className="bg-[#131313]/80 backdrop-blur-2xl border border-[#262626] rounded-[2rem] p-8 shadow-2xl relative overflow-hidden group">
+               <div className="absolute -top-24 -right-24 w-64 h-64 bg-[#cc97ff]/10 blur-[80px] rounded-full group-hover:bg-[#cc97ff]/20 transition-colors duration-1000" />
+               <h2 className="text-3xl font-black mb-3 tracking-tight text-white drop-shadow-md">Compile New Sequence</h2>
+               <p className="text-[#adaaaa] mb-8 text-sm">Inject a YouTube or Tech Article link. The Alchemist will synthesize high-retention segments autonomously.</p>
+               
+               <div className="flex flex-col md:flex-row gap-4 relative z-10">
+                  <div className="flex-1 relative group/input">
+                    <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                       <LinkIcon className="text-[#777575] w-5 h-5 group-focus-within/input:text-[#cc97ff] transition-colors" />
+                    </div>
+                    <input 
+                      type="text" 
+                      value={url}
+                      onChange={(e) => setUrl(e.target.value)}
+                      placeholder="https://youtube.com/watch?v=..." 
+                      className="w-full bg-[#0e0e0e] border border-[#262626] focus:border-[#cc97ff] text-white rounded-2xl py-4 pl-14 pr-4 outline-none transition-all shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)] focus:shadow-[0_0_20px_rgba(204,151,255,0.1),inset_0_2px_10px_rgba(0,0,0,0.5)] placeholder:text-[#494847]"
+                    />
+                  </div>
+                  <button 
+                    onClick={() => handleGenerate(false)}
+                    disabled={isGenerating}
+                    className="flex items-center justify-center gap-2 bg-gradient-to-br from-[#cc97ff] to-[#9c48ea] text-[#360061] font-bold rounded-2xl px-10 py-4 hover:brightness-110 hover:shadow-[0_0_30px_rgba(204,151,255,0.4)] transition-all disabled:opacity-50 min-w-[220px]"
+                  >
+                    {isGenerating ? <Loader2 className="w-5 h-5 animate-spin text-[#360061]" /> : <Sparkles className="w-5 h-5 text-[#360061]" />}
+                    {isGenerating ? "Synthesizing Source..." : "Extract Frames"}
+                  </button>
+               </div>
+            </section>
+
+            {/* AI Generator Spinner */}
+            {isGenerating && generatedVideos.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-32 transform transition-all">
+                  <div className="relative mb-8">
+                    <Loader2 className="w-16 h-16 animate-spin text-[#cc97ff] drop-shadow-[0_0_15px_rgba(204,151,255,0.6)]" />
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-[#fed01b] blur-[15px] rounded-full animate-pulse" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-2 tracking-tight">Alchemist is processing data shards...</h3>
+                  <p className="text-[#adaaaa] text-sm">Identifying viral retention peaks. Do not close this window.</p>
+                </div>
+            )}
+
+            {/* Rendered Nodes Array */}
+            {generatedVideos.length > 0 && (
+              <div className="space-y-10">
+                 <h2 className="text-2xl font-black tracking-tight flex items-center gap-3">
+                   <div className="w-1.5 h-8 bg-[#fed01b] rounded-full shadow-[0_0_15px_rgba(254,208,27,0.8)]" /> 
+                   Extracted Sequences ({generatedVideos.length})
+                 </h2>
+                 
+                 <div className="grid gap-10">
+                    {generatedVideos.map((vid, idx) => (
+                       <motion.div
+                         initial={{ opacity: 0, y: 30 }}
+                         animate={{ opacity: 1, y: 0 }}
+                         transition={{ delay: idx * 0.1, duration: 0.5, ease: "easeOut" }}
+                         key={idx}
+                         className="flex flex-col xl:flex-row gap-10 bg-[#131313] p-8 lg:p-10 rounded-[2.5rem] border border-[#262626] shadow-[0_20px_50px_rgba(0,0,0,0.5)] relative overflow-hidden"
+                       >
+                         {/* Card Internal Glow */}
+                         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[#cc97ff]/5 blur-[100px] pointer-events-none rounded-full" />
+                         
+                         {/* Left: Script Breakdown */}
+                         <div className="flex-1 space-y-8 relative z-10">
+                            <h3 className="text-3xl font-black tracking-tighter leading-tight pr-4 text-transparent bg-clip-text bg-gradient-to-r from-white to-[#adaaaa] drop-shadow-md">{vid.title}</h3>
+                            <div className="space-y-6">
+                               {vid.script.map((s:any, i:number) => (
+                                  <div key={i} className="pl-6 border-l-2 border-[#262626] hover:border-[#cc97ff] transition-colors relative group py-2">
+                                     <div className="absolute -left-[6px] top-4 w-2.5 h-2.5 rounded-full bg-[#131313] border-2 border-[#cc97ff] group-hover:bg-[#cc97ff] group-hover:shadow-[0_0_15px_rgba(204,151,255,0.8)] transition-all" />
+                                     <p className="text-[#fcf8f8] text-lg leading-relaxed mb-4 font-medium">"{s.text}"</p>
+                                     <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#262626]/50 rounded-lg border border-[#494847]/50 backdrop-blur-sm">
+                                        <Sparkles className="w-3 h-3 text-[#fed01b]" />
+                                        <span className="text-[11px] uppercase tracking-wider font-bold text-[#fed01b]">Visual Cue: {s.imagePrompt}</span>
+                                     </div>
+                                  </div>
+                               ))}
+                            </div>
+                         </div>
+
+                         {/* Right: The Phone Frame & Actions */}
+                         <div className="xl:w-[420px] flex flex-col gap-6 relative z-10">
+                            {renderingVideoIndex !== idx ? (
+                               <div className="h-full min-h-[400px] border border-dashed border-[#494847] rounded-[2.5rem] flex flex-col items-center justify-center p-10 bg-[#0e0e0e]/40 relative overflow-hidden group">
+                                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#cc97ff]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                  <Video className="w-16 h-16 text-[#494847] mb-6 group-hover:text-[#cc97ff] transition-colors duration-500" />
+                                  <p className="text-center text-[#adaaaa] text-sm mb-8 leading-relaxed">JSON Script mapped successfully. Ready to deploy ElevenLabs synthesized vocals and Pexels stock assets.</p>
+                                  <button
+                                     onClick={() => handleRenderVideo(idx)}
+                                     className="w-full py-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-[#777575]/30 font-bold transition-all flex justify-center items-center gap-2 text-[#cc97ff] hover:border-[#cc97ff]/50 hover:shadow-[0_0_20px_rgba(204,151,255,0.1)] relative z-10"
+                                  >
+                                      <Wand2 className="w-5 h-5" /> Compile to Video
+                                  </button>
+                               </div>
+                            ) : (
+                               <div className="flex flex-col gap-4">
+                                  
+                                  {/* Glass Phone Player */}
+                                  <div className="w-full bg-[#000] border-4 border-[#262626] rounded-[2.5rem] overflow-hidden shadow-[0_0_40px_rgba(204,151,255,0.15)] relative ring-1 ring-white/10">
+                                      {!videoAudioUrls[idx] ? (
+                                         <div className="flex flex-col items-center justify-center min-h-[600px] bg-[#0e0e0e]">
+                                            <Loader2 className="w-12 h-12 animate-spin text-[#cc97ff] mb-6" />
+                                            <p className="text-xs uppercase tracking-widest font-bold text-[#cc97ff] animate-pulse">Synthesizing Vocal Node...</p>
+                                         </div>
+                                      ) : (
+                                         <div className="w-full aspect-[9/16] bg-[#050505]">
+                                            <Player
+                                               component={TikTokComposition}
+                                               inputProps={{ script: vid.script, audioUrl: videoAudioUrls[idx], durationInFrames: audioDurations[idx] ? Math.max(30, Math.ceil(audioDurations[idx] * 30)) : 1800 }}
+                                               durationInFrames={audioDurations[idx] ? Math.max(30, Math.ceil(audioDurations[idx] * 30)) : 1800}
+                                               fps={30}
+                                               compositionWidth={1080}
+                                               compositionHeight={1920}
+                                               style={{ width: '100%', height: '100%' }}
+                                               controls
+                                               autoPlay
+                                               loop
+                                            />
+                                         </div>
+                                      )}
+                                  </div>
+
+                                  {/* Download Triggers */}
+                                  {videoAudioUrls[idx] && (
+                                     <div className="flex flex-col gap-3 mt-4">
+                                        <button 
+                                          onClick={() => handleDownload(idx, 'mp4')}
+                                          disabled={isDownloading !== null}
+                                          className="flex justify-center items-center gap-2 py-4 rounded-2xl bg-gradient-to-br from-[#cc97ff] to-[#9c48ea] text-[#360061] font-black shadow-[0_0_20px_rgba(204,151,255,0.3)] hover:brightness-110 disabled:opacity-50 transition-all text-sm tracking-wide"
+                                        >
+                                           {isDownloading === 'mp4' ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
+                                           {isDownloading === 'mp4' ? "Compiling Node..." : "DOWNLOAD H.264 (MP4)"}
+                                        </button>
+                                        <button 
+                                          onClick={() => handleDownload(idx, 'mov')}
+                                          disabled={isDownloading !== null}
+                                          className="flex justify-center items-center gap-2 py-3 rounded-2xl bg-[#0e0e0e] text-[#adaaaa] border border-[#262626] hover:border-[#777575] hover:text-white font-bold disabled:opacity-50 transition-all text-xs uppercase tracking-widest"
+                                        >
+                                           {isDownloading === 'mov' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                                           {isDownloading === 'mov' ? "Rendering ProRES..." : "Download ProRes (MOV)"}
+                                        </button>
+                                     </div>
+                                  )}
+                               </div>
+                            )}
+                         </div>
+
+                       </motion.div>
+                    ))}
+                 </div>
+
+                 {/* Infinity Scroll / Next Block trigger */}
+                 <div className="pt-16 pb-8 text-center flex justify-center">
+                    <button 
+                       onClick={() => handleGenerate(true)}
+                       disabled={isGenerating}
+                       className="group relative flex items-center justify-center w-full max-w-sm disabled:opacity-50"
+                    >
+                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#fed01b]/20 to-transparent w-full h-full opacity-0 group-hover:opacity-100 transition-opacity rounded-full blur-xl" />
+                       <div className="flex items-center gap-4 bg-[#131313] border border-[#262626] group-hover:border-[#fed01b]/50 px-8 py-4 rounded-full transition-all relative z-10 w-full justify-center">
+                          {isGenerating ? <Loader2 className="w-5 h-5 animate-spin text-[#fed01b]" /> : <Rocket className="w-5 h-5 text-[#fed01b]" />}
+                          <span className="text-white font-bold text-sm tracking-wide">EXTRACT TIMELINE SHARDS</span>
+                       </div>
+                    </button>
+                 </div>
+
+              </div>
+            )}
+         </div>
+      </main>
     </div>
   );
 }
 
 export default function Dashboard() {
-  const router = useRouter();
-  const { isLoaded, userId } = useAuth();
-  
   return (
-    <main className="min-h-screen bg-[#050505] text-white selection:bg-purple-500/30">
-      {/* Static Background Gradients */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-pink-600/10 rounded-full blur-[100px]" />
-      </div>
-
-      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 backdrop-blur-md border-b border-white/5 bg-[#050505]/80">
-        <button onClick={() => router.push("/")} className="flex items-center gap-2 font-bold text-xl tracking-tighter hover:opacity-80 transition-opacity">
-          <ArrowLeft className="w-5 h-5 text-gray-400" />
-          <Wand2 className="w-5 h-5 text-purple-400 ml-2" />
-          Scrolldemy
-        </button>
-        <div>
-          {isLoaded && !userId && (
-            <SignInButton mode="modal">
-              <button className="text-sm font-medium bg-white/10 hover:bg-white/20 border border-white/10 px-4 py-2 rounded-full transition-colors">
-                Sign In
-              </button>
-            </SignInButton>
-          )}
-          {isLoaded && userId && (
-            <UserButton />
-          )}
-        </div>
-      </header>
-      
-      <Suspense fallback={<div className="pt-32 text-center text-gray-500">Loading Studio...</div>}>
-         <DashboardContent />
-      </Suspense>
-    </main>
+    <Suspense fallback={<div className="h-screen bg-[#0e0e0e] flex items-center justify-center text-[#adaaaa]">Waking up Alchemist protocols...</div>}>
+       <DashboardContent />
+    </Suspense>
   );
 }
