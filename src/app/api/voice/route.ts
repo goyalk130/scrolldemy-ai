@@ -4,9 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 export async function POST(req: Request) {
   try {
     const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // Allowing guest access for voice generation to perfectly match the free-tier rules in the main generator
 
     // Default to the very popular 'Adam' voice on ElevenLabs if none provided
     const { text, voiceId = "pNInz6obpgDQGcFmaJgB" } = await req.json(); 
