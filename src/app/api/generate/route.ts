@@ -4,11 +4,10 @@ import * as cheerio from "cheerio";
 import { auth } from "@clerk/nextjs/server";
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 export async function POST(req: Request) {
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
   try {
     // 1. Authenticate Request
     const { userId } = await auth();
